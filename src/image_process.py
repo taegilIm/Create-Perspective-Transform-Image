@@ -1,4 +1,4 @@
-from tkinter import filedialog, messagebox, PhotoImage
+from tkinter import filedialog, messagebox
 import cv2 as cv
 from PIL import Image, ImageTk
 import numpy as np
