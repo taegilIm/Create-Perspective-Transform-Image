@@ -1,7 +1,10 @@
 # Create-Perspective-Transform-Image
 
 Library Requirement
--
+- numpy 1.24.3 above
+- opencv-python 4.10.0.84 above
+- image 1.5.33 above
+- pillow 10.4.0 above
 
 Input:
 
