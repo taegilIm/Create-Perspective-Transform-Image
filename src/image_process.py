@@ -20,7 +20,7 @@ def selectFile() -> str | None:
 
 def openImageFile(
     file_path: str, win_size: tuple[int, int]
-) -> tuple[tuple[int, int], ImageTk.PhotoImage] | tuple[None, None]:
+) -> tuple[tuple[int, int], Image.Image] | tuple[None, None]:
     global cv_image
 
     # read image to cv
@@ -35,17 +35,16 @@ def openImageFile(
         return (None, None)
 
     # get photoimage from cv
-    tk_image = cvToTk(cv_image)
+    pil_image = cvToPilImage(cv_image)
 
-    return (image_size, tk_image)
+    return (image_size, pil_image)
 
 
-def cvToTk(image) -> ImageTk.PhotoImage:
+def cvToPilImage(image) -> ImageTk.PhotoImage:
     rgb_image = cv.cvtColor(image, cv.COLOR_BGR2RGB)
     pil_image = Image.fromarray(rgb_image)
-    tk_image = ImageTk.PhotoImage(pil_image)
 
-    return tk_image
+    return pil_image
 
 
 def imageTransfer(pos: list[list[float]], image_size: str):

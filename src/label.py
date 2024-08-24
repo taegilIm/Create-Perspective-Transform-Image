@@ -1,14 +1,24 @@
 import tkinter as tk
+from PIL import Image, ImageTk
 
 import image_process
 
 win_size = ()
 
+# top of labels position x, y
+start_pos = [10, 10]
+
+# image section's size x, y
+image_section_size = []
+
+# x1, y1, x2, y2 ...
 pos: list[list[float]] = [[0, 0], [0, 0], [0, 0], [0, 0]]
 index = 0
 
+# image points
 points_id: list[int] = []
 
+# canvas image
 image_id: int = 0
 
 # output size
@@ -16,17 +26,28 @@ image_size = ["640x480", "800x600", "1024x768", "1280x720", "1366x768", "1920x10
 
 
 def Initailizing(root: tk.Tk, size: tuple[int, int]):
-    global win_size, win_root, canvas, file_button, save_file_button, execute_button, position
+    global win_size, win_root, image_section_size, canvas, file_button, save_file_button, execute_button, position, explain
 
+    # initialize variables
     win_root = root
     win_size = size
+
+    image_section_size = [
+        win_size[0] * 2 / 3 - start_pos[0],
+        win_size[1] * 5 / 6 - start_pos[1],
+    ]
 
     canvas = tk.Canvas(root, width=1366, height=766)
     canvas.pack(fill="both", expand=True)
 
     # image section
     canvas.create_rectangle(
-        10, 10, win_size[0] * 2 / 3, win_size[1] * 5 / 6, width=2, fill=""
+        start_pos[0],
+        start_pos[1],
+        win_size[0] * 2 / 3,
+        win_size[1] * 5 / 6,
+        width=2,
+        fill="",
     )
 
     # buttons define
@@ -37,7 +58,7 @@ def Initailizing(root: tk.Tk, size: tuple[int, int]):
     # position section
     canvas.create_rectangle(
         win_size[0] * 2 / 3 + 20,
-        10,
+        start_pos[1],
         win_size[0] - 10,
         win_size[1] / 2,
         width=2,
@@ -50,13 +71,31 @@ def Initailizing(root: tk.Tk, size: tuple[int, int]):
         justify="left",
     )
 
+    # how to use section
+    canvas.create_rectangle(
+        win_size[0] * 2 / 3 + 20,
+        win_size[1] / 2 + 20,
+        win_size[0] - 10,
+        win_size[1] - 10,
+        width=2,
+        fill="",
+    )
+    explain = tk.Label(
+        text="1. select image\n\n2.set 4 position to click the image\n\n3. click execute button\n\n4. save file",
+        font=("Arial", 20),
+        justify="left",
+    )
+
 
 def placeLabels(root: tk.Tk):
     # place labels
-    file_button.place(x=10, y=win_size[1] * 5 / 6 + 30)
-    save_file_button.place(x=10, y=win_size[1] * 5 / 6 + 30)
-    execute_button.place(x=10, y=win_size[1] * 5 / 6 + 30)
-    position.place(x=win_size[0] * 2 / 3 + 30, y=20)
+    file_button.place(x=start_pos[0], y=win_size[1] * 5 / 6 + start_pos[1] + 20)
+    save_file_button.place(x=start_pos[0], y=win_size[1] * 5 / 6 + start_pos[1] + 20)
+    execute_button.place(x=start_pos[0], y=win_size[1] * 5 / 6 + start_pos[1] + 20)
+    position.place(x=win_size[0] * 2 / 3 + start_pos[0] + 20, y=start_pos[1] + 10)
+    explain.place(
+        x=win_size[0] * 2 / 3 + start_pos[0] + 20, y=win_size[1] / 2 + start_pos[1] + 20
+    )
 
     # adjust position
     root.update_idletasks()
@@ -64,8 +103,38 @@ def placeLabels(root: tk.Tk):
     btn_size1 = file_button.winfo_width()
     btn_size2 = save_file_button.winfo_width() + btn_size1
 
-    save_file_button.place(x=30 + btn_size1, y=win_size[1] * 5 / 6 + 30)
-    execute_button.place(x=50 + btn_size2, y=win_size[1] * 5 / 6 + 30)
+    save_file_button.place(
+        x=start_pos[0] + 20 + btn_size1, y=win_size[1] * 5 / 6 + start_pos[1] + 20
+    )
+    execute_button.place(
+        x=start_pos[0] + 40 + btn_size2, y=win_size[1] * 5 / 6 + start_pos[1] + 20
+    )
+
+
+def createImage(image: Image.Image) -> int:
+    global tk_image
+
+    width, height = image.size
+
+    img = image
+
+    # cut image if size is too big
+    if width > image_section_size[0] or height > image_section_size[1]:
+        img = image.crop(
+            (
+                0,
+                0,
+                min(width, image_section_size[0]),
+                min(height, image_section_size[1]),
+            )
+        )
+
+    tk_image = ImageTk.PhotoImage(img)
+
+    # get image id
+    id = canvas.create_image(start_pos[0], start_pos[1], anchor="nw", image=tk_image)
+
+    return id
 
 
 # event process funtions
@@ -95,7 +164,7 @@ def onLMBClick(event: tk.Event):
 
 
 def onOpenFile():
-    global tk_image, image_id
+    global image_id
 
     if image_id != 0:
         canvas.delete(image_id)
@@ -106,12 +175,12 @@ def onOpenFile():
         return
 
     # get image
-    image_size, tk_image = image_process.openImageFile(file_path, win_size)
+    image_size, pil_image = image_process.openImageFile(file_path, win_size)
     if image_size is None:
         return
 
     # image create
-    image_id = canvas.create_image(10, 10, anchor="nw", image=tk_image)
+    image_id = createImage(pil_image)
     canvas.tag_bind(image_id, "<Button-1>", onLMBClick)
 
 
@@ -143,10 +212,11 @@ def onExcute(event):
     if index:
         # get transformed image
         transf_image = image_process.imageTransfer(pos, listbox.get(index))
-        image_result = image_process.cvToTk(transf_image)
+        img = image_process.cvToPilImage(transf_image)
+        image_result = ImageTk.PhotoImage(img)
 
         canvas.delete(image_id)
-        image_id = canvas.create_image(10, 10, anchor="nw", image=image_result)
+        image_id = createImage(img)
 
         # delete points
         for i in points_id:
